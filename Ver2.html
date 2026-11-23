@@ -243,7 +243,7 @@
     <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl space-y-4">
       <div class="flex items-center justify-between">
         <h3 id="modal-title" class="text-base font-bold text-stone-900">새 와인 추가</h3>
-        <button id="btn-close-modal" type="button" class="text-stone-400 hover:text-stone-700 text-lg leading-none px-1">&times;</button>
+        <button id="btn-close-modal" type="button" class="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-sm transition shrink-0">닫기</button>
       </div>
       <form id="wine-form" class="space-y-3">
         <div>
@@ -315,7 +315,7 @@
             <h3 class="text-base font-bold text-stone-900 leading-tight">테이스팅 노트 사용 가이드 (체크 리스트 순서)</h3>
           </div>
         </div>
-        <button id="btn-close-guide" type="button" class="text-stone-500 hover:text-stone-800 text-xl leading-none px-1">&times;</button>
+        <button id="btn-close-guide" type="button" class="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-sm transition shrink-0">닫기</button>
       </div>
 
       <ol class="space-y-1.5 text-[13px] text-stone-800">
@@ -374,7 +374,7 @@
     <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between gap-2">
         <h3 id="image-modal-title" class="text-sm font-bold text-stone-900">와인 요약 이미지 카드</h3>
-        <button id="btn-close-image-modal" type="button" class="text-stone-400 hover:text-stone-700 text-xl leading-none px-1">&times;</button>
+        <button id="btn-close-image-modal" type="button" class="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-sm transition shrink-0">닫기</button>
       </div>
       <div id="exported-cards-container" class="overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-2 space-y-3">
         <!-- Single or multiple wine card images rendered here -->
@@ -382,7 +382,7 @@
       <div class="space-y-1.5">
         <div class="grid grid-cols-2 gap-2">
           <button id="btn-share-modal-trigger" type="button" class="text-center py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-900 text-xs font-bold shadow-sm transition">
-            📤 카톡/앱 공유
+            📤 이미지 공유
           </button>
           <button id="btn-download-all-trigger" type="button" class="text-center py-2.5 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-xs font-bold shadow-sm transition">
             PNG 다운로드
@@ -1504,8 +1504,8 @@
 
       const dlBtn = document.getElementById('btn-download-all-trigger');
       dlBtn.textContent = items.length > 1
-        ? `전체 ${items.length}장 다운로드`
-        : 'PNG 다운로드';
+        ? `전체 이미지 저장 (${items.length}장)`
+        : '이미지 저장';
 
       const modal = document.getElementById('image-export-modal');
       modal.classList.remove('hidden');
@@ -1560,11 +1560,7 @@
           dataUrl: await buildWineCardDataUrl(wine)
         };
       }));
-      const shared = await shareExportItems(items);
-      if (!shared) {
-        showExportModal(`전체 와인 요약 이미지 (${items.length}장)`, items, false);
-        showToast('이 브라우저에서는 직접 공유가 지원되지 않아 저장 창을 열었어요.');
-      }
+      showExportModal(`전체 와인 요약 이미지 (${items.length}장)`, items, false);
     }
 
     async function openWineImageExport(wine) {
