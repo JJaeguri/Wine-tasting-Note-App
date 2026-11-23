@@ -68,7 +68,7 @@
       <!-- Welcome Guide Banner -->
       <div class="bg-gradient-to-r from-[#F4E6EA] to-[#F7EFE6] border border-[#6B1D2F]/25 rounded-xl px-3.5 py-2 text-center space-y-0.5">
         <p class="text-[11px] sm:text-xs italic font-bold text-[#5B1628] leading-snug">
-          "최고의 와인은 가장 비싼 와인도, 가장 오래된 와인도 아닌,<br />내가 마셔서 가장 맛있는 와인이다."
+          "최고의 와인은 가장 비싼 와인도, 가장 오래된 와인도 아닌,<br />내가 마셨을 때 가장 맛있는 와인이다."
         </p>
         <p class="text-xs sm:text-[13px] text-stone-800 leading-snug font-medium">
           정답은 없습니다. 오늘 마신 와인이 내게 어떻게 기억되는지 체크하며, 나만의 취향을 발견해 보세요.🥂
@@ -91,7 +91,7 @@
       <!-- Selected Wine Editor -->
       <div id="wine-editor" class="space-y-4">
         <!-- Wine Header Card -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80">
+        <div id="wine-header-card" class="bg-white rounded-2xl p-4 shadow-sm border-2 border-stone-200/80 transition-colors">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 flex-wrap mb-1">
@@ -314,6 +314,7 @@
           <span class="text-xl leading-none" aria-hidden="true">🍷</span>
           <div>
             <h3 class="text-base font-bold text-stone-900 leading-tight">테이스팅 노트 사용 가이드</h3>
+            <p class="text-xs text-stone-600 mt-0.5">아래 순서대로 체크하면 쉽게 기록할 수 있어요.</p>
           </div>
         </div>
         <button id="btn-close-guide" type="button" class="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-sm transition shrink-0">닫기</button>
@@ -436,13 +437,52 @@
       '주정강화': 'bg-purple-100 text-purple-800'
     };
 
+    const TYPE_CARD_STYLES = {
+      '레드': {
+        active: 'border-[#6B1D2F] bg-rose-50/75 shadow-sm',
+        idle: 'border-rose-200/70 bg-rose-50/30 hover:bg-rose-50/60',
+        label: 'text-[#6B1D2F]',
+        cardBorder: 'border-rose-200/90 bg-gradient-to-br from-white to-rose-50/35'
+      },
+      '화이트': {
+        active: 'border-amber-500 bg-amber-50/80 shadow-sm',
+        idle: 'border-amber-200/70 bg-amber-50/30 hover:bg-amber-50/60',
+        label: 'text-amber-800',
+        cardBorder: 'border-amber-200/90 bg-gradient-to-br from-white to-amber-50/35'
+      },
+      '스파클링': {
+        active: 'border-yellow-500 bg-yellow-50/85 shadow-sm',
+        idle: 'border-yellow-200/80 bg-yellow-50/30 hover:bg-yellow-50/60',
+        label: 'text-yellow-800',
+        cardBorder: 'border-yellow-200/90 bg-gradient-to-br from-white to-yellow-50/35'
+      },
+      '샴페인': {
+        active: 'border-yellow-500 bg-yellow-50/85 shadow-sm',
+        idle: 'border-yellow-200/80 bg-yellow-50/30 hover:bg-yellow-50/60',
+        label: 'text-yellow-800',
+        cardBorder: 'border-yellow-200/90 bg-gradient-to-br from-white to-yellow-50/35'
+      },
+      '로제': {
+        active: 'border-pink-500 bg-pink-50/80 shadow-sm',
+        idle: 'border-pink-200/70 bg-pink-50/30 hover:bg-pink-50/60',
+        label: 'text-pink-700',
+        cardBorder: 'border-pink-200/90 bg-gradient-to-br from-white to-pink-50/35'
+      },
+      '주정강화': {
+        active: 'border-purple-600 bg-purple-50/80 shadow-sm',
+        idle: 'border-purple-200/70 bg-purple-50/30 hover:bg-purple-50/60',
+        label: 'text-purple-800',
+        cardBorder: 'border-purple-200/90 bg-gradient-to-br from-white to-purple-50/35'
+      }
+    };
+
     const CANVAS_TYPE_COLORS = {
-      '레드': { bg: '#FFE4E6', text: '#6B1D2F' },
-      '화이트': { bg: '#FEF3C7', text: '#92400E' },
-      '스파클링': { bg: '#FEF9C3', text: '#854D0E' },
-      '샴페인': { bg: '#FEF9C3', text: '#854D0E' },
-      '로제': { bg: '#FCE7F3', text: '#BE185D' },
-      '주정강화': { bg: '#F3E8FF', text: '#6B21A8' }
+      '레드': { bg: '#FFE4E6', text: '#6B1D2F', border: '#FECDD3', tint: '#FFF1F2' },
+      '화이트': { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', tint: '#FFFBEB' },
+      '스파클링': { bg: '#FEF9C3', text: '#854D0E', border: '#FEF08A', tint: '#FEFCE8' },
+      '샴페인': { bg: '#FEF9C3', text: '#854D0E', border: '#FEF08A', tint: '#FEFCE8' },
+      '로제': { bg: '#FCE7F3', text: '#BE185D', border: '#FBCFE8', tint: '#FDF2F8' },
+      '주정강화': { bg: '#F3E8FF', text: '#6B21A8', border: '#E9D5FF', tint: '#FAF5FF' }
     };
 
     function createDefaultWines() {
@@ -588,14 +628,17 @@
         const tasted = isWineTasted(wine);
         const btn = document.createElement('button');
         btn.type = 'button';
+        const typeStyle = TYPE_CARD_STYLES[wine.type] || {
+          active: 'border-[#6B1D2F] bg-rose-50/70 shadow-sm',
+          idle: 'border-stone-200 bg-stone-50/60 hover:bg-stone-100/70',
+          label: 'text-stone-600'
+        };
         btn.className = `shrink-0 text-left px-3 py-2 rounded-xl border transition min-w-[140px] max-w-[200px] ${
-          isActive
-            ? 'border-[#6B1D2F] bg-rose-50/70 shadow-sm'
-            : 'border-stone-200 bg-stone-50/60 hover:bg-stone-100/70'
+          isActive ? typeStyle.active : typeStyle.idle
         }`;
         btn.innerHTML = `
           <div class="flex items-center justify-between gap-1.5 mb-0.5">
-            <span class="text-[11px] font-semibold ${isActive ? 'text-[#6B1D2F]' : 'text-stone-500'}">#${idx + 1} · ${escapeHtml(wine.type)}</span>
+            <span class="text-[11px] font-semibold ${typeStyle.label}">#${idx + 1} · ${escapeHtml(wine.type)}</span>
             <span class="text-[11px] font-bold ${wine.rating > 0 ? 'text-amber-600' : 'text-stone-300'}">
               ${wine.isBest ? '🏆 ' : ''}${wine.rating > 0 ? '★' + wine.rating : (tasted ? '기록중' : '미체크')}
             </span>
@@ -612,6 +655,13 @@
     }
 
     function renderWineHeader(wine) {
+      const headerCard = document.getElementById('wine-header-card');
+      const cardTypeStyle = TYPE_CARD_STYLES[wine.type];
+      if (headerCard) {
+        headerCard.className = `rounded-2xl p-4 shadow-sm border-2 transition-colors ${
+          cardTypeStyle ? cardTypeStyle.cardBorder : 'bg-white border-stone-200/80'
+        }`;
+      }
       const badge = document.getElementById('active-wine-type-badge');
       badge.textContent = wine.type;
       badge.className = `px-2.5 py-0.5 rounded-full text-xs font-semibold ${TYPE_BADGE_STYLES[wine.type] || 'bg-stone-100 text-stone-700'}`;
@@ -969,7 +1019,10 @@
 
       sorted.forEach(wine => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 space-y-2.5';
+        const sumTypeStyle = TYPE_CARD_STYLES[wine.type];
+        card.className = `rounded-2xl p-4 shadow-sm border-2 space-y-2.5 transition-colors ${
+          sumTypeStyle ? sumTypeStyle.cardBorder : 'bg-white border-stone-200/80'
+        }`;
 
         const tasteChips = TASTE_AXES
           .filter(a => wine.taste[a.key] > 0)
@@ -1220,13 +1273,14 @@
       ctx.font = '500 18px "Noto Sans KR", "Inter", sans-serif';
       ctx.fillText('나만의 인생 와인 찾기', PAD, 86);
 
+      const typeColors = CANVAS_TYPE_COLORS[wine.type] || { bg: '#F5F5F4', text: '#44403C', border: '#E7E5E4', tint: '#FFFFFF' };
       let y = headerH + 28;
       const cardH = totalH - y - 64;
       drawRoundRect(ctx, PAD - 12, y, INNER_W + 24, cardH, 24);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
-      ctx.strokeStyle = '#E7E5E4';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = typeColors.border;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
       const topBlockStartY = y + 32;
@@ -1256,7 +1310,6 @@
       y = topBlockStartY + 6;
 
       let bx = cx;
-      const typeColors = CANVAS_TYPE_COLORS[wine.type] || { bg: '#F5F5F4', text: '#44403C' };
       ctx.font = '700 18px "Noto Sans KR", "Inter", sans-serif';
       const typeW = ctx.measureText(wine.type).width + 28;
       drawRoundRect(ctx, bx, y - 22, typeW, 32, 16);
