@@ -136,7 +136,7 @@
                 <div id="rebuy-group" class="inline-flex rounded-xl bg-stone-100 p-1">
                   <button type="button" data-rebuy="yes" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">👍 있음</button>
                   <button type="button" data-rebuy="maybe" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">🤔 보통</button>
-                  <button type="button" data-rebuy="no" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">👎 글쎄</button>
+                  <button type="button" data-rebuy="no" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">👎 글쎄..</button>
                 </div>
               </div>
             </div>
@@ -257,8 +257,9 @@
               <option value="레드">레드</option>
               <option value="화이트">화이트</option>
               <option value="스파클링">스파클링</option>
+              <option value="샴페인">샴페인</option>
               <option value="로제">로제</option>
-              <option value="디저트">디저트</option>
+              <option value="주정강화">주정강화</option>
             </select>
           </div>
           <div>
@@ -312,7 +313,7 @@
         <div class="flex items-center gap-2">
           <span class="text-xl leading-none" aria-hidden="true">🍷</span>
           <div>
-            <h3 class="text-base font-bold text-stone-900 leading-tight">테이스팅 노트 사용 가이드 (체크 리스트 순서)</h3>
+            <h3 class="text-base font-bold text-stone-900 leading-tight">테이스팅 노트 사용 가이드</h3>
           </div>
         </div>
         <button id="btn-close-guide" type="button" class="px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-sm transition shrink-0">닫기</button>
@@ -344,16 +345,18 @@
           <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">4</span>
           <div class="leading-snug">
             <div class="font-bold text-stone-900">맨 위로 이동해 별점 & 또 마실 의향 체크</div>
-            <p class="text-stone-700 mt-0.5">최하단 <span class="font-semibold text-[#6B1D2F]">맨 위로 올라가 별점 매기기 ↑</span> 버튼으로 이동해 별점·의향을 남겨요.</p>
-            <p class="text-stone-700 mt-1">와인 이름 옆 <span class="font-semibold text-amber-800">🏆 트로피 모양(오늘의 픽)</span>을 누르면 오늘의 최고 와인으로 선택할 수 있어요.</p>
+            <ul class="space-y-1 mt-1 text-stone-700">
+              <li class="flex items-start gap-1.5"><span class="text-[#6B1D2F] font-bold leading-snug">•</span><span>최하단 <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-stone-200 text-[11px] font-semibold text-[#6B1D2F] shadow-sm align-middle">맨 위로 올라가 별점 매기기 ↑</span> 버튼으로 이동해 별점·의향을 남겨요.</span></li>
+              <li class="flex items-start gap-1.5"><span class="text-[#6B1D2F] font-bold leading-snug">•</span><span>와인 이름 옆 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl border border-stone-200 bg-white text-[11px] font-semibold text-stone-700 align-middle">🏆 오늘의 픽</span> 을 누르면 오늘의 최고 와인으로 선택할 수 있어요.</span></li>
+              <li class="flex items-start gap-1.5"><span class="text-[#6B1D2F] font-bold leading-snug">•</span><span><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-stone-200 bg-stone-50 text-[11px] font-semibold text-stone-700 align-middle">📷 와인 사진 추가</span> 하면 요약 이미지에도 함께 들어가요.</span></li>
+            </ul>
           </div>
         </li>
         <li class="flex items-start gap-2.5 bg-stone-50 rounded-xl px-3 py-2 border border-stone-200/80">
           <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">5</span>
           <div class="leading-snug">
             <div class="font-bold text-stone-900">요약 확인 및 공유</div>
-            <p class="text-stone-700 mt-0.5">상단 <span class="font-semibold">요약</span> 탭에서 비교하고 <span class="font-semibold">모임 공유용 복사</span>·<span class="font-semibold">요약 이미지 공유</span>로 저장하고 나눠보세요.</p>
-            <p class="text-stone-700 mt-1"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-stone-200 bg-stone-50 text-[11px] font-semibold text-stone-700 align-middle">📷 와인 사진 추가</span> 하면 요약 이미지에도 함께 들어가요.</p>
+            <p class="text-stone-700 mt-1">상단 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#5B1628] text-white text-[11px] font-semibold align-middle">요약</span> 탭에서 <span class="inline-flex items-center px-2 py-0.5 rounded-xl bg-[#6B1D2F] text-white text-[11px] font-semibold align-middle">📋 모임 공유용 복사</span> · <span class="inline-flex items-center px-2 py-0.5 rounded-xl bg-amber-400 text-stone-900 text-[11px] font-semibold align-middle">📤 요약 이미지 공유</span> 로 저장하고 나눠보세요.</p>
           </div>
         </li>
       </ol>
@@ -428,8 +431,18 @@
       '레드': 'bg-rose-100 text-[#6B1D2F]',
       '화이트': 'bg-amber-100 text-amber-800',
       '스파클링': 'bg-yellow-100 text-yellow-800',
+      '샴페인': 'bg-yellow-100 text-yellow-800',
       '로제': 'bg-pink-100 text-pink-700',
-      '디저트': 'bg-orange-100 text-orange-800'
+      '주정강화': 'bg-purple-100 text-purple-800'
+    };
+
+    const CANVAS_TYPE_COLORS = {
+      '레드': { bg: '#FFE4E6', text: '#6B1D2F' },
+      '화이트': { bg: '#FEF3C7', text: '#92400E' },
+      '스파클링': { bg: '#FEF9C3', text: '#854D0E' },
+      '샴페인': { bg: '#FEF9C3', text: '#854D0E' },
+      '로제': { bg: '#FCE7F3', text: '#BE185D' },
+      '주정강화': { bg: '#F3E8FF', text: '#6B21A8' }
     };
 
     function createDefaultWines() {
@@ -963,7 +976,7 @@
           .map(a => `${a.label} ${wine.taste[a.key]}/5`)
           .join(' · ');
 
-        const rebuyBase = wine.rebuy === 'yes' ? '👍 또 마실래요' : wine.rebuy === 'maybe' ? '🤔 보통' : wine.rebuy === 'no' ? '👎 글쎄요' : '';
+        const rebuyBase = wine.rebuy === 'yes' ? '👍 또 마실래요' : wine.rebuy === 'maybe' ? '🤔 보통' : wine.rebuy === 'no' ? '👎 글쎄..' : '';
         const rebuyReasonText = wine.rebuyReason && wine.rebuyReason.trim() ? wine.rebuyReason.trim() : '';
         const rebuyLabel = rebuyBase ? (rebuyReasonText ? `${rebuyBase} (${rebuyReasonText})` : rebuyBase) : (rebuyReasonText ? `의향 이유: ${rebuyReasonText}` : '');
 
@@ -1066,7 +1079,7 @@
         const tasteStr = TASTE_AXES.filter(a => w.taste[a.key] > 0).map(a => `${a.label}:${w.taste[a.key]}`).join(' / ');
         if (tasteStr) lines.push(`   - 맛: ${tasteStr}`);
         if (w.aromas.length > 0) lines.push(`   - 향: ${w.aromas.join(', ')}`);
-        const rebuyMap = { yes: '👍 있음', maybe: '🤔 보통', no: '👎 글쎄' };
+        const rebuyMap = { yes: '👍 있음', maybe: '🤔 보통', no: '👎 글쎄..' };
         if (w.rebuy || (w.rebuyReason && w.rebuyReason.trim())) {
           const rText = [w.rebuy ? rebuyMap[w.rebuy] : '', w.rebuyReason && w.rebuyReason.trim() ? w.rebuyReason.trim() : ''].filter(Boolean).join(' - ');
           lines.push(`   - 또 마실 의향: ${rText}`);
@@ -1168,7 +1181,7 @@
         ? wrapCanvasText(ctx, wine.memo.trim(), INNER_W - 56)
         : [];
 
-      const rebuyMap = { yes: '👍 또 마실 의향: 있음', maybe: '🤔 또 마실 의향: 보통', no: '👎 또 마실 의향: 글쎄' };
+      const rebuyMap = { yes: '👍 또 마실 의향: 있음', maybe: '🤔 또 마실 의향: 보통', no: '👎 또 마실 의향: 글쎄..' };
       const rebuyStr = [
         wine.rebuy ? rebuyMap[wine.rebuy] : '',
         wine.rebuyReason && wine.rebuyReason.trim() ? `(${wine.rebuyReason.trim()})` : ''
@@ -1243,12 +1256,13 @@
       y = topBlockStartY + 6;
 
       let bx = cx;
+      const typeColors = CANVAS_TYPE_COLORS[wine.type] || { bg: '#F5F5F4', text: '#44403C' };
       ctx.font = '700 18px "Noto Sans KR", "Inter", sans-serif';
       const typeW = ctx.measureText(wine.type).width + 28;
       drawRoundRect(ctx, bx, y - 22, typeW, 32, 16);
-      ctx.fillStyle = '#FFE4E6';
+      ctx.fillStyle = typeColors.bg;
       ctx.fill();
-      ctx.fillStyle = '#6B1D2F';
+      ctx.fillStyle = typeColors.text;
       ctx.fillText(wine.type, bx + 14, y);
       bx += typeW + 12;
 
