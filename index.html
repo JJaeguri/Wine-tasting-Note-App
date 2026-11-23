@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나의 와인 테이스팅 노트</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #FAF7F2;
+      color: #231F20;
+    }
+    .wine-gradient {
+      background: linear-gradient(135deg, #5B1628 0%, #7C2238 60%, #923047 100%);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @media print {
+      header, #btn-copy-summary, #btn-print-summary, #btn-open-reset-modal {
+        display: none !important;
+      }
+      body {
+        background-color: #ffffff !important;
+        padding-bottom: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+  <!-- Top Header -->
+  <header class="wine-gradient text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="text-2xl leading-none" aria-hidden="true">🍷</span>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight truncate">나의 와인 테이스팅 노트</h1>
+          <p id="gathering-subtitle" class="text-xs text-rose-100/85 truncate">나만의 인생 와인 찾기</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="btn-tab-tasting" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-[#5B1628] shadow-sm transition">
+          테이스팅
+        </button>
+        <button id="btn-tab-summary" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white hover:bg-white/25 transition">
+          요약 <span id="summary-badge" class="ml-0.5 px-1.5 py-0.2 bg-amber-300 text-[#4A101E] rounded-full text-[10px] font-bold">0</span>
+        </button>
+        <button id="btn-open-guide" type="button" title="사용 가이드" aria-label="사용 가이드" class="w-7 h-7 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center shadow-sm transition shrink-0">
+          ?
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-3xl mx-auto px-4 pt-3 space-y-3">
+    <!-- VIEW 1: TASTING -->
+    <section id="view-tasting" class="space-y-3">
+      <!-- Welcome Guide Banner -->
+      <div class="bg-gradient-to-r from-[#F4E6EA] to-[#F7EFE6] border border-[#6B1D2F]/25 rounded-xl px-3.5 py-2 text-center space-y-0.5">
+        <p class="text-[11px] sm:text-xs italic font-bold text-[#5B1628] leading-snug">
+          "최고의 와인은 가장 비싼 와인도, 가장 오래된 와인도 아닌,<br />내가 마셔서 가장 맛있는 와인이다."
+        </p>
+        <p class="text-xs sm:text-[13px] text-stone-800 leading-snug font-medium">
+          정답은 없습니다. 오늘 마신 와인이 내게 어떻게 기억되는지 체크하며, 나만의 취향을 발견해 보세요.🥂
+        </p>
+      </div>
+
+      <!-- Wine Lineup Strip -->
+      <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-stone-200/80">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-xs font-semibold uppercase tracking-wider text-stone-500">오늘의 와인 리스트</span>
+          <button id="btn-open-add-modal" type="button" class="inline-flex items-center gap-1 text-xs font-semibold text-[#6B1D2F] hover:text-[#4A101E] bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-full transition">
+            <span>+ 와인 추가</span>
+          </button>
+        </div>
+        <div id="wine-lineup" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Selected Wine Editor -->
+      <div id="wine-editor" class="space-y-4">
+        <!-- Wine Header Card -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span id="active-wine-type-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-[#6B1D2F]">레드</span>
+                <span id="active-wine-vintage" class="text-xs font-medium text-stone-500"></span>
+              </div>
+              <h2 id="active-wine-name" class="text-lg sm:text-xl font-bold text-stone-900 leading-snug break-words">와인을 선택하세요</h2>
+              <p id="active-wine-region" class="text-xs text-stone-500 mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button id="btn-toggle-best" type="button" title="오늘의 베스트 픽" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1">
+                <span>🏆</span>
+                <span class="hidden sm:inline">오늘의 픽</span>
+              </button>
+              <button id="btn-edit-wine" type="button" title="와인 정보 수정" class="p-2 rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800 transition text-xs font-medium">
+                수정
+              </button>
+            </div>
+          </div>
+
+          <!-- Star Rating & Rebuy -->
+          <div class="mt-4 pt-3.5 border-t border-stone-100 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span class="block text-xs font-medium text-stone-500 mb-1">내 별점</span>
+                <div id="star-rating-group" class="flex items-center gap-1">
+                  <!-- 1..5 stars -->
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-stone-500">또 마실 의향</span>
+                <div id="rebuy-group" class="inline-flex rounded-xl bg-stone-100 p-1">
+                  <button type="button" data-rebuy="yes" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">👍 있음</button>
+                  <button type="button" data-rebuy="maybe" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">🤔 보통</button>
+                  <button type="button" data-rebuy="no" class="rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">👎 글쎄</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <input id="wine-rebuy-reason" type="text" placeholder="또 마실 의향 이유 (예: 산미가 취향이라, 가성비가 좋아서, 조금 무거움 등)" class="w-full rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F] transition" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Unified Radar Chart + 5-Axis Taste Profile Card -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 space-y-3">
+          <!-- Radar Chart (Top) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-sm font-bold text-stone-900">맛 그래프</h3>
+              <span id="chart-avg-badge" class="text-xs font-semibold text-[#6B1D2F] bg-rose-50 px-2 py-0.5 rounded-full">평균 -</span>
+            </div>
+            <div class="relative h-48 w-full">
+              <canvas id="taste-radar-chart"></canvas>
+            </div>
+            <p id="taste-profile-summary" class="text-xs text-stone-500 text-center mt-1">
+              숫자(1~5)를 탭하면 맛 그래프가 그려집니다.
+            </p>
+          </div>
+
+          <!-- Taste Balance Check (Directly Below, Same Card) -->
+          <div class="pt-2.5 border-t border-stone-100 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-stone-900">맛 밸런스 체크</h3>
+              <span class="text-[11px] text-stone-400">1(약함) ~ 5(강함) 탭하여 선택</span>
+            </div>
+            <div id="taste-axes-container" class="space-y-2">
+              <!-- Dynamically rendered 5 axes -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Aroma & Flavor Tags -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-stone-900">느껴지는 향 · 풍미</h3>
+            <span id="selected-aroma-count" class="text-xs text-stone-500">0개 선택</span>
+          </div>
+          <div id="aroma-categories" class="space-y-3">
+            <!-- Dynamically rendered aroma chip groups -->
+          </div>
+          <div class="pt-2 border-t border-stone-100">
+            <label for="custom-aroma-input" class="block text-xs font-semibold text-stone-500 mb-1.5">기타 향 직접 입력</label>
+            <div class="flex gap-2">
+              <input id="custom-aroma-input" type="text" placeholder="예: 흰후추, 살구, 꿀, 젖은 돌 등" class="flex-1 rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]" />
+              <button id="btn-add-custom-aroma" type="button" class="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-xs font-semibold transition shrink-0">
+                + 추가
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Memo -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 space-y-2">
+          <label for="wine-memo" class="block text-sm font-bold text-stone-900">한줄 메모 & 페어링</label>
+          <textarea id="wine-memo" rows="2" placeholder="예: 처음엔 입안에서 상큼하게 톡 쏘는 맛! 시간이 지나니 부드러워지고 치즈랑 잘 어울림." class="w-full rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F] transition"></textarea>
+        </div>
+
+        <!-- Scroll to Top for Star Rating -->
+        <div class="flex flex-col items-center gap-1.5 pt-1 pb-2 text-center">
+          <p class="text-[11px] text-stone-500">테이스팅을 마쳤다면 위에서 별점과 오늘의 픽을 남겨보세요</p>
+          <button id="btn-scroll-top-rating" type="button" class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-white border border-stone-200 hover:border-[#6B1D2F]/40 hover:bg-rose-50/60 text-xs font-semibold text-[#6B1D2F] shadow-sm transition">
+            <span>맨 위로 올라가 별점 매기기 ↑</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: GATHERING SUMMARY -->
+    <section id="view-summary" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-stone-900">오늘 모임 테이스팅 요약</h2>
+          <p id="summary-stats-text" class="text-xs text-stone-500 mt-0.5">기록된 와인이 없습니다.</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="btn-copy-summary" type="button" class="px-3 py-2 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-xs font-semibold shadow-sm transition">
+            📋 모임 공유용 복사
+          </button>
+          <button id="btn-export-all-img" type="button" class="px-3 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold transition">
+            🖼️ 전체요약 이미지로 저장
+          </button>
+          <button id="btn-share-all-img" type="button" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-900 text-xs font-semibold shadow-sm transition">
+            📤 이미지 공유 (카톡 등)
+          </button>
+          <button id="btn-open-reset-modal" type="button" class="px-3 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-600 text-xs font-semibold transition">
+            새 모임 시작
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary List -->
+      <div id="summary-cards" class="space-y-3">
+        <!-- Dynamically populated -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Add / Edit Wine Modal -->
+  <div id="wine-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/45 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 id="modal-title" class="text-base font-bold text-stone-900">새 와인 추가</h3>
+        <button id="btn-close-modal" type="button" class="text-stone-400 hover:text-stone-700 text-lg leading-none px-1">&times;</button>
+      </div>
+      <form id="wine-form" class="space-y-3">
+        <div>
+          <label for="input-wine-name" class="block text-xs font-semibold text-stone-600 mb-1">와인 이름 *</label>
+          <input id="input-wine-name" type="text" required placeholder="예: 클라우디 베이 소비뇽 블랑" class="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="input-wine-type" class="block text-xs font-semibold text-stone-600 mb-1">종류</label>
+            <select id="input-wine-type" class="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]">
+              <option value="레드">레드</option>
+              <option value="화이트">화이트</option>
+              <option value="스파클링">스파클링</option>
+              <option value="로제">로제</option>
+              <option value="디저트">디저트</option>
+            </select>
+          </div>
+          <div>
+            <label for="input-wine-vintage" class="block text-xs font-semibold text-stone-600 mb-1">빈티지 (선택)</label>
+            <input id="input-wine-vintage" type="text" placeholder="예: 2022 또는 NV" class="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]" />
+          </div>
+        </div>
+        <div>
+          <label for="input-wine-region" class="block text-xs font-semibold text-stone-600 mb-1">품종 / 산지 (선택)</label>
+          <input id="input-wine-region" type="text" placeholder="예: 소비뇽 블랑 · 뉴질랜드 말보로" class="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]" />
+        </div>
+        <div class="flex items-center justify-between pt-2">
+          <button id="btn-delete-wine" type="button" class="hidden px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition">
+            삭제하기
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button id="btn-cancel-modal" type="button" class="px-4 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition">
+              취소
+            </button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-xs font-semibold shadow-sm transition">
+              저장
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/45 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl space-y-4">
+      <h3 class="text-base font-bold text-stone-900">새 모임을 시작할까요?</h3>
+      <p class="text-xs text-stone-600 leading-relaxed">
+        현재 기록한 별점과 맛 체크 내용이 모두 초기화되고 기본 샘플 리스트로 돌아갑니다. 필요한 경우 먼저 '모임 공유용 복사'로 기록을 저장해 두세요.
+      </p>
+      <div class="flex items-center justify-end gap-2">
+        <button id="btn-cancel-reset" type="button" class="px-4 py-2 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition">
+          취소
+        </button>
+        <button id="btn-confirm-reset" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition">
+          초기화하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial / Input Guide Modal -->
+  <div id="guide-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-3">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-4 shadow-xl space-y-2.5">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xl leading-none" aria-hidden="true">🍷</span>
+          <div>
+            <h3 class="text-base font-bold text-stone-900 leading-tight">처음 사용 가이드 (체크 리스트 순서)</h3>
+            <p class="text-xs text-stone-600 mt-0.5">아래 순서대로 체크하면 쉽게 기록할 수 있어요.</p>
+          </div>
+        </div>
+        <button id="btn-close-guide" type="button" class="text-stone-500 hover:text-stone-800 text-xl leading-none px-1">&times;</button>
+      </div>
+
+      <ol class="space-y-1.5 text-[13px] text-stone-800">
+        <li class="flex items-start gap-2.5 bg-stone-50 rounded-xl px-3 py-2 border border-stone-200/80">
+          <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">1</span>
+          <div class="leading-snug">
+            <div class="font-bold text-stone-900">와인 고르기</div>
+            <p class="text-stone-700 mt-0.5">리스트에서 지금 마시는 와인을 선택하세요.<br />(새 와인은 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-[#6B1D2F] border border-rose-200/70 align-middle">+ 와인 추가</span> 버튼을 클릭해 추가)</p>
+          </div>
+        </li>
+        <li class="flex items-start gap-2.5 bg-rose-50/70 rounded-xl px-3 py-2 border border-rose-200/80">
+          <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">2</span>
+          <div class="leading-snug">
+            <div class="font-bold text-stone-900">맛 그래프부터 채우기</div>
+            <p class="text-stone-700 mt-0.5"><span class="font-semibold">맛 밸런스 체크</span> 숫자(1~5)를 누르면 위쪽 그래프가 바로 그려져요.</p>
+          </div>
+        </li>
+        <li class="flex items-start gap-2.5 bg-stone-50 rounded-xl px-3 py-2 border border-stone-200/80">
+          <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">3</span>
+          <div class="leading-snug">
+            <div class="font-bold text-stone-900">향 · 풍미 & 한줄 메모</div>
+            <p class="text-stone-700 mt-0.5">향 태그를 고르고(없으면 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-stone-200 text-stone-800 border border-stone-300 align-middle">+</span> 로 추가) 아래 메모를 적어요.</p>
+          </div>
+        </li>
+        <li class="flex items-start gap-2.5 bg-rose-50/70 rounded-xl px-3 py-2 border border-rose-200/80">
+          <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">4</span>
+          <div class="leading-snug">
+            <div class="font-bold text-stone-900">맨 위로 이동해 별점 & 또 마실 의향 체크</div>
+            <p class="text-stone-700 mt-0.5">최하단 <span class="font-semibold text-[#6B1D2F]">맨 위로 올라가 별점 매기기 ↑</span> 버튼으로 이동해 별점·의향을 남겨요.</p>
+            <p class="text-stone-700 mt-1">와인 이름 옆 <span class="font-semibold text-amber-800">🏆 트로피 모양(오늘의 픽)</span>을 누르면 오늘의 최고 와인으로 선택할 수 있어요.</p>
+          </div>
+        </li>
+        <li class="flex items-start gap-2.5 bg-stone-50 rounded-xl px-3 py-2 border border-stone-200/80">
+          <span class="w-5 h-5 rounded-full bg-[#6B1D2F] text-white font-bold flex items-center justify-center shrink-0 text-xs mt-0.5">5</span>
+          <div class="leading-snug">
+            <div class="font-bold text-stone-900">요약 확인 및 공유</div>
+            <p class="text-stone-700 mt-0.5">상단 <span class="font-semibold">요약</span> 탭에서 비교하고 <span class="font-semibold">모임 공유용 복사</span>·<span class="font-semibold">전체요약 이미지로 저장</span>으로 저장해요.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="space-y-2 pt-0.5">
+        <p class="text-xs text-stone-500 text-center">
+          가이드는 오른쪽 상단 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-white text-[11px] font-bold align-middle mx-0.5">?</span> 버튼으로 다시 볼 수 있습니다.
+        </p>
+        <button id="btn-start-tasting" type="button" class="w-full py-2.5 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-sm font-bold shadow-sm transition">
+          확인했어요. 테이스팅 시작하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wine Card Image Export Modal -->
+  <div id="image-export-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="image-modal-title" class="text-sm font-bold text-stone-900">와인 요약 이미지 카드</h3>
+        <button id="btn-close-image-modal" type="button" class="text-stone-400 hover:text-stone-700 text-xl leading-none px-1">&times;</button>
+      </div>
+      <div id="exported-cards-container" class="overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-2 space-y-3">
+        <!-- Single or multiple wine card images rendered here -->
+      </div>
+      <div class="space-y-1.5">
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-share-modal-trigger" type="button" class="text-center py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-900 text-xs font-bold shadow-sm transition">
+            📤 카톡/앱 공유
+          </button>
+          <button id="btn-download-all-trigger" type="button" class="text-center py-2.5 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-xs font-bold shadow-sm transition">
+            PNG 다운로드
+          </button>
+        </div>
+        <p class="text-[11px] text-stone-500 text-center">모바일에서는 각 이미지를 길게 눌러 사진첩에 저장할 수도 있어요.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-stone-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-opacity">
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'wine_gathering_notes_v3';
+    const GUIDE_SEEN_KEY = 'wine_gathering_guide_seen_v1';
+
+    const TASTE_AXES = [
+      { key: 'sweetness', label: '당도', low: '드라이', high: '스위트' },
+      { key: 'acidity', label: '산도', low: '부드러움', high: '상큼함' },
+      { key: 'tannin', label: '타닌', low: '매끄러움', high: '떫음' },
+      { key: 'body', label: '바디감', low: '가벼움', high: '묵직함' },
+      { key: 'finish', label: '여운', low: '짧음', high: '김' }
+    ];
+
+    const AROMA_GROUPS = [
+      {
+        category: '과일향',
+        items: ['시트러스(레몬/자몽)', '청사과/배', '복숭아/열대과일', '체리/딸기', '블랙베리/자두', '말린 과일']
+      },
+      {
+        category: '꽃 · 허브',
+        items: ['아카시아/흰꽃', '장미/제비꽃', '풀/허브', '민트/유칼립투스']
+      },
+      {
+        category: '오크 · 숙성 · 스파이스',
+        items: ['바닐라/카라멜', '버터/브리오슈', '오크/토스트', '후추/스파이스', '초콜릿/커피', '가죽/흙내음', '미네랄/돌내음']
+      }
+    ];
+
+    const TYPE_BADGE_STYLES = {
+      '레드': 'bg-rose-100 text-[#6B1D2F]',
+      '화이트': 'bg-amber-100 text-amber-800',
+      '스파클링': 'bg-yellow-100 text-yellow-800',
+      '로제': 'bg-pink-100 text-pink-700',
+      '디저트': 'bg-orange-100 text-orange-800'
+    };
+
+    function createDefaultWines() {
+      return [
+        {
+          id: 'wine-1',
+          name: 'Mayer am Pfarrplatz — Grüner Veltliner (마이어 암 파어플라츠 그뤼너 벨트리너)',
+          type: '화이트',
+          vintage: '',
+          region: '오스트리아 빈(Wien) · 그뤼너 벨트리너',
+          rating: 0,
+          rebuy: '',
+          rebuyReason: '',
+          isBest: false,
+          taste: { sweetness: 0, acidity: 0, tannin: 0, body: 0, finish: 0 },
+          aromas: [],
+          memo: ''
+        },
+        {
+          id: 'wine-2',
+          name: 'Mayer am Pfarrplatz — Wiener Gemischter Satz DAC (마이어 암 파어플라츠 비너 게미슈터 자츠 DAC)',
+          type: '화이트',
+          vintage: '',
+          region: '오스트리아 빈(Wien) · 그뤼너 벨트리너, 리슬링 등 필드 블렌드',
+          rating: 0,
+          rebuy: '',
+          rebuyReason: '',
+          isBest: false,
+          taste: { sweetness: 0, acidity: 0, tannin: 0, body: 0, finish: 0 },
+          aromas: [],
+          memo: ''
+        },
+        {
+          id: 'wine-3',
+          name: 'Schloss Gobelsburg — Ried LAMM 1ÖTW Kamptal (슐로스 고벨스버그 리트 람 캄프탈)',
+          type: '화이트',
+          vintage: '2024',
+          region: '오스트리아 캄프탈(Kamptal) · 그뤼너 벨트리너',
+          rating: 0,
+          rebuy: '',
+          rebuyReason: '',
+          isBest: false,
+          taste: { sweetness: 0, acidity: 0, tannin: 0, body: 0, finish: 0 },
+          aromas: [],
+          memo: ''
+        },
+        {
+          id: 'wine-4',
+          name: 'Scheiblhofer — THE LEGENDS (샤이블호퍼 더 레전즈)',
+          type: '레드',
+          vintage: '',
+          region: '오스트리아 부르겐란트(Burgenland) · 카베르네 소비뇽, 메를로',
+          rating: 0,
+          rebuy: '',
+          rebuyReason: '',
+          isBest: false,
+          taste: { sweetness: 0, acidity: 0, tannin: 0, body: 0, finish: 0 },
+          aromas: [],
+          memo: ''
+        }
+      ];
+    }
+
+    function createDefaultCategoryAromas() {
+      return {
+        '과일향': [],
+        '꽃 · 허브': [],
+        '오크 · 숙성 · 스파이스': []
+      };
+    }
+
+    let state = {
+      wines: createDefaultWines(),
+      activeWineId: 'wine-1',
+      activeTab: 'tasting',
+      editingWineId: null,
+      customCategoryAromas: createDefaultCategoryAromas(),
+      openAromaInputCategory: null
+    };
+
+    let radarChart = null;
+    let toastTimer = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.wines) && parsed.wines.length > 0) {
+          state.wines = parsed.wines;
+          state.activeWineId = parsed.activeWineId && state.wines.some(w => w.id === parsed.activeWineId)
+            ? parsed.activeWineId
+            : state.wines[0].id;
+        }
+        if (parsed && parsed.customCategoryAromas) {
+          state.customCategoryAromas = {
+            ...createDefaultCategoryAromas(),
+            ...parsed.customCategoryAromas
+          };
+        }
+      } catch (e) {
+        // Ignore storage errors in sandboxed environments
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          wines: state.wines,
+          activeWineId: state.activeWineId,
+          customCategoryAromas: state.customCategoryAromas
+        }));
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2200);
+    }
+
+    function getActiveWine() {
+      return state.wines.find(w => w.id === state.activeWineId) || state.wines[0] || null;
+    }
+
+    function isWineTasted(wine) {
+      const hasTaste = Object.values(wine.taste).some(v => v > 0);
+      return wine.rating > 0 || hasTaste || wine.aromas.length > 0 || wine.memo.trim().length > 0 || (wine.rebuyReason && wine.rebuyReason.trim().length > 0);
+    }
+
+    function renderLineup() {
+      const container = document.getElementById('wine-lineup');
+      container.innerHTML = '';
+
+      state.wines.forEach((wine, idx) => {
+        const isActive = wine.id === state.activeWineId;
+        const tasted = isWineTasted(wine);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `shrink-0 text-left px-3 py-2 rounded-xl border transition min-w-[140px] max-w-[200px] ${
+          isActive
+            ? 'border-[#6B1D2F] bg-rose-50/70 shadow-sm'
+            : 'border-stone-200 bg-stone-50/60 hover:bg-stone-100/70'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-1.5 mb-0.5">
+            <span class="text-[11px] font-semibold ${isActive ? 'text-[#6B1D2F]' : 'text-stone-500'}">#${idx + 1} · ${escapeHtml(wine.type)}</span>
+            <span class="text-[11px] font-bold ${wine.rating > 0 ? 'text-amber-600' : 'text-stone-300'}">
+              ${wine.isBest ? '🏆 ' : ''}${wine.rating > 0 ? '★' + wine.rating : (tasted ? '기록중' : '미체크')}
+            </span>
+          </div>
+          <div class="text-xs font-bold text-stone-900 truncate">${escapeHtml(wine.name)}</div>
+        `;
+        btn.addEventListener('click', () => {
+          state.activeWineId = wine.id;
+          saveState();
+          renderAll();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderWineHeader(wine) {
+      const badge = document.getElementById('active-wine-type-badge');
+      badge.textContent = wine.type;
+      badge.className = `px-2.5 py-0.5 rounded-full text-xs font-semibold ${TYPE_BADGE_STYLES[wine.type] || 'bg-stone-100 text-stone-700'}`;
+
+      document.getElementById('active-wine-vintage').textContent = wine.vintage ? `${wine.vintage}` : '';
+      document.getElementById('active-wine-name').textContent = wine.name;
+      document.getElementById('active-wine-region').textContent = wine.region || '산지/품종 미입력';
+
+      const bestBtn = document.getElementById('btn-toggle-best');
+      if (wine.isBest) {
+        bestBtn.className = 'px-2.5 py-1.5 rounded-xl border border-amber-400 bg-amber-50 text-amber-800 text-xs font-semibold transition flex items-center gap-1';
+      } else {
+        bestBtn.className = 'px-2.5 py-1.5 rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 text-xs font-semibold transition flex items-center gap-1';
+      }
+
+      // Star Rating
+      const starGroup = document.getElementById('star-rating-group');
+      starGroup.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center text-lg transition ${
+          i <= wine.rating ? 'bg-amber-100 text-amber-500 scale-105' : 'bg-stone-100 text-stone-300 hover:text-amber-300'
+        }`;
+        starBtn.textContent = '★';
+        starBtn.setAttribute('aria-label', `${i}점`);
+        starBtn.addEventListener('click', () => {
+          wine.rating = wine.rating === i ? 0 : i;
+          saveState();
+          renderAll();
+        });
+        starGroup.appendChild(starBtn);
+      }
+
+      // Rebuy reason
+      document.getElementById('wine-rebuy-reason').value = wine.rebuyReason || '';
+
+      // Rebuy buttons
+      document.querySelectorAll('.rebuy-btn').forEach(btn => {
+        const val = btn.getAttribute('data-rebuy');
+        if (wine.rebuy === val) {
+          btn.className = 'rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-[#6B1D2F] shadow-sm transition';
+        } else {
+          btn.className = 'rebuy-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 transition';
+        }
+      });
+    }
+
+    function renderTasteAxes(wine) {
+      const container = document.getElementById('taste-axes-container');
+      container.innerHTML = '';
+
+      TASTE_AXES.forEach(axis => {
+        const currentVal = wine.taste[axis.key] || 0;
+        const row = document.createElement('div');
+        row.className = 'space-y-1';
+
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between text-xs';
+        header.innerHTML = `
+          <span class="font-bold text-stone-800">${axis.label}</span>
+          <span class="text-[11px] text-stone-400">${axis.low} ↔ ${axis.high}</span>
+        `;
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'grid grid-cols-5 gap-1.5';
+
+        for (let level = 1; level <= 5; level++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const isSelected = currentVal === level;
+          const isFilled = currentVal >= level && currentVal > 0;
+          btn.className = `py-1.5 rounded-xl text-xs font-bold transition border ${
+            isSelected
+              ? 'bg-[#6B1D2F] border-[#6B1D2F] text-white shadow-sm'
+              : isFilled
+                ? 'bg-rose-100/90 border-rose-200 text-[#6B1D2F]'
+                : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100'
+          }`;
+          btn.textContent = level;
+          btn.addEventListener('click', () => {
+            wine.taste[axis.key] = currentVal === level ? 0 : level;
+            saveState();
+            renderTasteAxes(wine);
+            renderRadarChart(wine);
+            renderLineup();
+            updateSummaryBadge();
+          });
+          btnGroup.appendChild(btn);
+        }
+
+        row.appendChild(header);
+        row.appendChild(btnGroup);
+        container.appendChild(row);
+      });
+    }
+
+    function renderRadarChart(wine) {
+      const canvas = document.getElementById('taste-radar-chart');
+      const dataValues = TASTE_AXES.map(a => wine.taste[a.key] || 0);
+      const nonZero = dataValues.filter(v => v > 0);
+      const avg = nonZero.length > 0 ? (nonZero.reduce((a, b) => a + b, 0) / nonZero.length).toFixed(1) : '-';
+
+      document.getElementById('chart-avg-badge').textContent = `평균 ${avg}`;
+
+      const summaryEl = document.getElementById('taste-profile-summary');
+      if (nonZero.length === 0) {
+        summaryEl.textContent = '숫자(1~5)를 탭하면 맛 그래프가 그려집니다.';
+      } else {
+        const strong = TASTE_AXES.filter(a => wine.taste[a.key] >= 4).map(a => a.label);
+        summaryEl.textContent = strong.length > 0
+          ? `특징: ${strong.join(', ')}이(가) 돋보이는 스타일`
+          : '전반적으로 균형 잡히고 무난한 밸런스';
+      }
+
+      if (radarChart) {
+        radarChart.data.datasets[0].data = dataValues;
+        radarChart.update();
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+      radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: TASTE_AXES.map(a => a.label),
+          datasets: [{
+            label: '맛 프로필',
+            data: dataValues,
+            backgroundColor: 'rgba(107, 29, 47, 0.22)',
+            borderColor: '#6B1D2F',
+            borderWidth: 2,
+            pointBackgroundColor: '#6B1D2F',
+            pointBorderColor: '#ffffff',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0,
+              max: 5,
+              ticks: {
+                stepSize: 1,
+                display: false
+              },
+              grid: {
+                color: 'rgba(120, 113, 108, 0.18)'
+              },
+              angleLines: {
+                color: 'rgba(120, 113, 108, 0.18)'
+              },
+              pointLabels: {
+                font: {
+                  size: 12,
+                  weight: '600'
+                },
+                color: '#44403C'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    function renderAromas(wine) {
+      const container = document.getElementById('aroma-categories');
+      container.innerHTML = '';
+      document.getElementById('selected-aroma-count').textContent = `${wine.aromas.length}개 선택`;
+
+      const allKnownItems = new Set();
+      AROMA_GROUPS.forEach(g => {
+        g.items.forEach(i => allKnownItems.add(i));
+        (state.customCategoryAromas[g.category] || []).forEach(i => allKnownItems.add(i));
+      });
+      const extraItems = wine.aromas.filter(a => !allKnownItems.has(a));
+
+      const groupsToRender = AROMA_GROUPS.map(g => ({
+        category: g.category,
+        items: Array.from(new Set([...g.items, ...(state.customCategoryAromas[g.category] || [])])),
+        allowAdd: true
+      }));
+
+      if (extraItems.length > 0) {
+        groupsToRender.push({
+          category: '직접 추가한 기타 향',
+          items: extraItems,
+          allowAdd: false
+        });
+      }
+
+      groupsToRender.forEach(group => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'space-y-1.5';
+
+        const title = document.createElement('div');
+        title.className = 'text-xs font-semibold text-stone-500';
+        title.textContent = group.category;
+        wrapper.appendChild(title);
+
+        const chips = document.createElement('div');
+        chips.className = 'flex flex-wrap gap-1.5 items-center';
+
+        group.items.forEach(item => {
+          const active = wine.aromas.includes(item);
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = `px-2.5 py-1.5 rounded-full text-xs font-medium border transition ${
+            active
+              ? 'bg-[#6B1D2F] border-[#6B1D2F] text-white shadow-sm'
+              : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+          }`;
+          chip.textContent = item;
+          chip.addEventListener('click', () => {
+            if (active) {
+              wine.aromas = wine.aromas.filter(a => a !== item);
+            } else {
+              wine.aromas.push(item);
+            }
+            saveState();
+            renderAromas(wine);
+            renderLineup();
+            updateSummaryBadge();
+          });
+          chips.appendChild(chip);
+        });
+
+        if (group.allowAdd) {
+          const isOpen = state.openAromaInputCategory === group.category;
+          const plusBtn = document.createElement('button');
+          plusBtn.type = 'button';
+          plusBtn.title = `${group.category} 추가`;
+          plusBtn.className = `px-2.5 py-1.5 rounded-full text-xs font-bold border transition ${
+            isOpen
+              ? 'border-stone-400 bg-stone-300 text-stone-900'
+              : 'border-stone-300 bg-stone-200 text-stone-800 hover:bg-stone-300'
+          }`;
+          plusBtn.textContent = isOpen ? '×' : '+';
+          plusBtn.addEventListener('click', () => {
+            state.openAromaInputCategory = isOpen ? null : group.category;
+            renderAromas(wine);
+            if (!isOpen) {
+              const openedInput = container.querySelector('input[data-category-input]');
+              if (openedInput) openedInput.focus();
+            }
+          });
+          chips.appendChild(plusBtn);
+        }
+
+        wrapper.appendChild(chips);
+
+        if (group.allowAdd && state.openAromaInputCategory === group.category) {
+          const inputRow = document.createElement('div');
+          inputRow.className = 'flex gap-1.5 pt-1';
+
+          const catInput = document.createElement('input');
+          catInput.type = 'text';
+          catInput.setAttribute('data-category-input', group.category);
+          catInput.placeholder = `${group.category} 직접 입력 (예: 추가할 향)`;
+          catInput.className = 'flex-1 rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#6B1D2F]/30 focus:border-[#6B1D2F]';
+
+          const submitCategoryAroma = () => {
+            const val = catInput.value.trim();
+            if (!val) return;
+            if (!state.customCategoryAromas[group.category]) {
+              state.customCategoryAromas[group.category] = [];
+            }
+            if (!group.items.includes(val)) {
+              state.customCategoryAromas[group.category].push(val);
+            }
+            if (!wine.aromas.includes(val)) {
+              wine.aromas.push(val);
+            }
+            state.openAromaInputCategory = null;
+            saveState();
+            renderAromas(wine);
+            renderLineup();
+            updateSummaryBadge();
+          };
+
+          catInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submitCategoryAroma();
+            } else if (e.key === 'Escape') {
+              state.openAromaInputCategory = null;
+              renderAromas(wine);
+            }
+          });
+
+          const addBtn = document.createElement('button');
+          addBtn.type = 'button';
+          addBtn.className = 'px-3 py-1.5 rounded-xl bg-[#6B1D2F] hover:bg-[#521422] text-white text-xs font-semibold transition shrink-0';
+          addBtn.textContent = '추가';
+          addBtn.addEventListener('click', submitCategoryAroma);
+
+          inputRow.appendChild(catInput);
+          inputRow.appendChild(addBtn);
+          wrapper.appendChild(inputRow);
+        }
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    function renderMemo(wine) {
+      const memoEl = document.getElementById('wine-memo');
+      memoEl.value = wine.memo || '';
+    }
+
+    function updateSummaryBadge() {
+      const tastedCount = state.wines.filter(isWineTasted).length;
+      document.getElementById('summary-badge').textContent = tastedCount;
+    }
+
+    function renderSummaryView() {
+      const tastedWines = state.wines.filter(isWineTasted);
+      const statsEl = document.getElementById('summary-stats-text');
+      statsEl.textContent = `전체 ${state.wines.length}병 중 ${tastedWines.length}병 테이스팅 완료`;
+
+      const container = document.getElementById('summary-cards');
+      container.innerHTML = '';
+
+      const sorted = [...state.wines].sort((a, b) => {
+        if (a.isBest !== b.isBest) return a.isBest ? -1 : 1;
+        return b.rating - a.rating;
+      });
+
+      if (sorted.length === 0) {
+        container.innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-sm text-stone-400 border border-stone-200/80">와인을 추가해 보세요.</div>';
+        return;
+      }
+
+      sorted.forEach(wine => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-4 shadow-sm border border-stone-200/80 space-y-2.5';
+
+        const tasteChips = TASTE_AXES
+          .filter(a => wine.taste[a.key] > 0)
+          .map(a => `${a.label} ${wine.taste[a.key]}/5`)
+          .join(' · ');
+
+        const rebuyBase = wine.rebuy === 'yes' ? '👍 또 마실래요' : wine.rebuy === 'maybe' ? '🤔 보통' : wine.rebuy === 'no' ? '👎 글쎄요' : '';
+        const rebuyReasonText = wine.rebuyReason && wine.rebuyReason.trim() ? wine.rebuyReason.trim() : '';
+        const rebuyLabel = rebuyBase ? (rebuyReasonText ? `${rebuyBase} (${rebuyReasonText})` : rebuyBase) : (rebuyReasonText ? `의향 이유: ${rebuyReasonText}` : '');
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${TYPE_BADGE_STYLES[wine.type] || 'bg-stone-100 text-stone-700'}">${escapeHtml(wine.type)}</span>
+                ${wine.isBest ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">🏆 오늘의 픽</span>' : ''}
+                ${rebuyLabel ? `<span class="text-[11px] text-stone-500">${rebuyLabel}</span>` : ''}
+              </div>
+              <h3 class="text-sm font-bold text-stone-900 mt-1">${escapeHtml(wine.name)}</h3>
+              ${wine.region ? `<p class="text-xs text-stone-500">${escapeHtml(wine.region)}</p>` : ''}
+            </div>
+            <div class="text-right shrink-0">
+              <div class="text-sm font-bold text-amber-500">${wine.rating > 0 ? '★'.repeat(wine.rating) : '<span class="text-xs text-stone-300">별점 없음</span>'}</div>
+            </div>
+          </div>
+          ${tasteChips ? `<div class="text-xs text-stone-700 bg-stone-50 rounded-xl px-3 py-2 font-medium">${escapeHtml(tasteChips)}</div>` : ''}
+          ${wine.aromas.length > 0 ? `<div class="flex flex-wrap gap-1">${wine.aromas.map(a => `<span class="px-2 py-0.5 rounded-full bg-rose-50 text-[#6B1D2F] text-[11px] font-medium">${escapeHtml(a)}</span>`).join('')}</div>` : ''}
+          ${wine.memo ? `<p class="text-xs text-stone-600 italic border-l-2 border-rose-200 pl-2.5">${escapeHtml(wine.memo)}</p>` : ''}
+          <div class="pt-1 flex justify-end">
+            <button type="button" class="btn-export-wine-img px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-[#6B1D2F] border border-stone-200 text-xs font-semibold transition">
+              🖼️ 이미지로 저장
+            </button>
+          </div>
+        `;
+
+        card.querySelector('.btn-export-wine-img').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openWineImageExport(wine);
+        });
+
+        card.addEventListener('click', () => {
+          state.activeWineId = wine.id;
+          switchTab('tasting');
+          renderAll();
+        });
+        container.appendChild(card);
+      });
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const tastingView = document.getElementById('view-tasting');
+      const summaryView = document.getElementById('view-summary');
+      const btnTasting = document.getElementById('btn-tab-tasting');
+      const btnSummary = document.getElementById('btn-tab-summary');
+
+      if (tab === 'tasting') {
+        tastingView.classList.remove('hidden');
+        summaryView.classList.add('hidden');
+        btnTasting.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-[#5B1628] shadow-sm transition';
+        btnSummary.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white hover:bg-white/25 transition';
+      } else {
+        tastingView.classList.add('hidden');
+        summaryView.classList.remove('hidden');
+        btnSummary.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-[#5B1628] shadow-sm transition';
+        btnTasting.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white hover:bg-white/25 transition';
+        renderSummaryView();
+      }
+    }
+
+    function openWineModal(wineToEdit = null) {
+      state.editingWineId = wineToEdit ? wineToEdit.id : null;
+      document.getElementById('modal-title').textContent = wineToEdit ? '와인 정보 수정' : '새 와인 추가';
+      document.getElementById('input-wine-name').value = wineToEdit ? wineToEdit.name : '';
+      document.getElementById('input-wine-type').value = wineToEdit ? wineToEdit.type : '레드';
+      document.getElementById('input-wine-vintage').value = wineToEdit ? wineToEdit.vintage : '';
+      document.getElementById('input-wine-region').value = wineToEdit ? wineToEdit.region : '';
+
+      const delBtn = document.getElementById('btn-delete-wine');
+      if (wineToEdit && state.wines.length > 1) {
+        delBtn.classList.remove('hidden');
+      } else {
+        delBtn.classList.add('hidden');
+      }
+
+      const modal = document.getElementById('wine-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('input-wine-name').focus();
+    }
+
+    function closeWineModal() {
+      const modal = document.getElementById('wine-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      state.editingWineId = null;
+    }
+
+    function copySummaryToClipboard() {
+      const lines = ['🍷 오늘의 와인 모임 테이스팅 기록', ''];
+      const sorted = [...state.wines].sort((a, b) => (b.isBest - a.isBest) || (b.rating - a.rating));
+
+      sorted.forEach((w, idx) => {
+        const star = w.rating > 0 ? `★${w.rating}/5` : '별점 미입력';
+        const best = w.isBest ? ' 🏆[오늘의 픽]' : '';
+        lines.push(`${idx + 1}. [${w.type}] ${w.name}${w.vintage ? ' ' + w.vintage : ''} (${star})${best}`);
+        const tasteStr = TASTE_AXES.filter(a => w.taste[a.key] > 0).map(a => `${a.label}:${w.taste[a.key]}`).join(' / ');
+        if (tasteStr) lines.push(`   - 맛: ${tasteStr}`);
+        if (w.aromas.length > 0) lines.push(`   - 향: ${w.aromas.join(', ')}`);
+        const rebuyMap = { yes: '👍 있음', maybe: '🤔 보통', no: '👎 글쎄' };
+        if (w.rebuy || (w.rebuyReason && w.rebuyReason.trim())) {
+          const rText = [w.rebuy ? rebuyMap[w.rebuy] : '', w.rebuyReason && w.rebuyReason.trim() ? w.rebuyReason.trim() : ''].filter(Boolean).join(' - ');
+          lines.push(`   - 또 마실 의향: ${rText}`);
+        }
+        if (w.memo.trim()) lines.push(`   - 메모: ${w.memo.trim()}`);
+        lines.push('');
+      });
+
+      const text = lines.join('\n').trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(() => showToast('클립보드에 복사되었습니다! 모임방이나 메모장에 붙여넣기 하세요.'))
+          .catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('클립보드에 복사되었습니다!');
+      } catch (e) {
+        showToast('복사에 실패했습니다.');
+      }
+      document.body.removeChild(ta);
+    }
+
+    function wrapCanvasText(ctx, text, maxWidth) {
+      const words = String(text || '').split('');
+      const lines = [];
+      let line = '';
+      for (let i = 0; i < words.length; i++) {
+        const ch = words[i];
+        if (ch === '\n') {
+          lines.push(line);
+          line = '';
+          continue;
+        }
+        const testLine = line + ch;
+        if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
+          lines.push(line);
+          line = ch;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function drawRoundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function buildWineCardDataUrl(wine) {
+      const W = 900;
+      const PAD = 54;
+      const INNER_W = W - PAD * 2;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      ctx.font = '700 32px "Noto Sans KR", "Inter", sans-serif';
+      const titleLines = wrapCanvasText(ctx, wine.name, INNER_W - 40);
+
+      ctx.font = '500 22px "Noto Sans KR", "Inter", sans-serif';
+      const memoLines = wine.memo && wine.memo.trim()
+        ? wrapCanvasText(ctx, wine.memo.trim(), INNER_W - 56)
+        : [];
+
+      const rebuyMap = { yes: '👍 또 마실 의향: 있음', maybe: '🤔 또 마실 의향: 보통', no: '👎 또 마실 의향: 글쎄' };
+      const rebuyStr = [
+        wine.rebuy ? rebuyMap[wine.rebuy] : '',
+        wine.rebuyReason && wine.rebuyReason.trim() ? `(${wine.rebuyReason.trim()})` : ''
+      ].filter(Boolean).join(' ');
+
+      const hasAromas = wine.aromas && wine.aromas.length > 0;
+      const aromaRowsEstimate = hasAromas ? Math.ceil(wine.aromas.length / 3) * 48 + 44 : 0;
+      const memoBoxH = memoLines.length > 0 ? memoLines.length * 32 + 56 : 0;
+
+      const headerH = 112;
+      const titleBlockH = 70 + titleLines.length * 42 + (wine.region ? 34 : 0) + 54 + (rebuyStr ? 38 : 0);
+      const radarBlockH = 380;
+      const totalH = headerH + 32 + titleBlockH + 28 + radarBlockH + (aromaRowsEstimate ? aromaRowsEstimate + 24 : 0) + (memoBoxH ? memoBoxH + 24 : 0) + 90;
+
+      canvas.width = W;
+      canvas.height = totalH;
+
+      ctx.fillStyle = '#FAF7F2';
+      ctx.fillRect(0, 0, W, totalH);
+
+      const grad = ctx.createLinearGradient(0, 0, W, headerH);
+      grad.addColorStop(0, '#5B1628');
+      grad.addColorStop(1, '#8D2D44');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, headerH);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 28px "Noto Sans KR", "Inter", sans-serif';
+      ctx.fillText('🍷 나의 와인 테이스팅 노트', PAD, 54);
+      ctx.fillStyle = 'rgba(255, 228, 230, 0.88)';
+      ctx.font = '500 18px "Noto Sans KR", "Inter", sans-serif';
+      ctx.fillText('나만의 인생 와인 찾기', PAD, 86);
+
+      let y = headerH + 28;
+      const cardH = totalH - y - 64;
+      drawRoundRect(ctx, PAD - 12, y, INNER_W + 24, cardH, 24);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.strokeStyle = '#E7E5E4';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      y += 38;
+      const cx = PAD + 16;
+
+      let bx = cx;
+      ctx.font = '700 18px "Noto Sans KR", "Inter", sans-serif';
+      const typeW = ctx.measureText(wine.type).width + 28;
+      drawRoundRect(ctx, bx, y - 22, typeW, 32, 16);
+      ctx.fillStyle = '#FFE4E6';
+      ctx.fill();
+      ctx.fillStyle = '#6B1D2F';
+      ctx.fillText(wine.type, bx + 14, y);
+      bx += typeW + 12;
+
+      if (wine.vintage) {
+        ctx.fillStyle = '#78716C';
+        ctx.font = '600 18px "Inter", sans-serif';
+        ctx.fillText(wine.vintage, bx, y);
+        bx += ctx.measureText(wine.vintage).width + 14;
+      }
+
+      if (wine.isBest) {
+        const bestTxt = '🏆 오늘의 픽';
+        ctx.font = '700 18px "Noto Sans KR", "Inter", sans-serif';
+        const bestW = ctx.measureText(bestTxt).width + 26;
+        drawRoundRect(ctx, bx, y - 22, bestW, 32, 16);
+        ctx.fillStyle = '#FEF3C7';
+        ctx.fill();
+        ctx.fillStyle = '#92400E';
+        ctx.fillText(bestTxt, bx + 13, y);
+      }
+
+      y += 42;
+
+      ctx.fillStyle = '#1C1917';
+      ctx.font = '700 32px "Noto Sans KR", "Inter", sans-serif';
+      titleLines.forEach(line => {
+        ctx.fillText(line, cx, y);
+        y += 42;
+      });
+
+      if (wine.region) {
+        ctx.fillStyle = '#78716C';
+        ctx.font = '500 20px "Noto Sans KR", "Inter", sans-serif';
+        ctx.fillText(wine.region, cx, y);
+        y += 34;
+      }
+
+      y += 8;
+      ctx.font = '700 30px "Inter", sans-serif';
+      for (let i = 1; i <= 5; i++) {
+        ctx.fillStyle = i <= wine.rating ? '#F59E0B' : '#E7E5E4';
+        ctx.fillText('★', cx + (i - 1) * 36, y);
+      }
+      if (wine.rating > 0) {
+        ctx.fillStyle = '#44403C';
+        ctx.font = '700 22px "Inter", sans-serif';
+        ctx.fillText(`${wine.rating}.0 / 5`, cx + 195, y - 2);
+      }
+      y += 38;
+
+      if (rebuyStr) {
+        ctx.fillStyle = '#5B1628';
+        ctx.font = '600 20px "Noto Sans KR", "Inter", sans-serif';
+        ctx.fillText(rebuyStr, cx, y);
+        y += 36;
+      }
+
+      y += 8;
+      ctx.strokeStyle = '#F5F5F4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, y);
+      ctx.lineTo(W - cx, y);
+      ctx.stroke();
+
+      const centerX = W / 2;
+      const centerY = y + 195;
+      const maxR = 130;
+      const axesCount = TASTE_AXES.length;
+
+      for (let level = 1; level <= 5; level++) {
+        const r = (maxR / 5) * level;
+        ctx.beginPath();
+        for (let i = 0; i < axesCount; i++) {
+          const angle = (Math.PI * 2 * i) / axesCount - Math.PI / 2;
+          const px = centerX + Math.cos(angle) * r;
+          const py = centerY + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(120, 113, 108, 0.22)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      ctx.font = '700 20px "Noto Sans KR", "Inter", sans-serif';
+      for (let i = 0; i < axesCount; i++) {
+        const angle = (Math.PI * 2 * i) / axesCount - Math.PI / 2;
+        const px = centerX + Math.cos(angle) * maxR;
+        const py = centerY + Math.sin(angle) * maxR;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(px, py);
+        ctx.strokeStyle = 'rgba(120, 113, 108, 0.22)';
+        ctx.stroke();
+
+        const lx = centerX + Math.cos(angle) * (maxR + 34);
+        const ly = centerY + Math.sin(angle) * (maxR + 28);
+        const axis = TASTE_AXES[i];
+        const val = wine.taste[axis.key] || 0;
+        const label = val > 0 ? `${axis.label} (${val})` : axis.label;
+        ctx.fillStyle = '#44403C';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, lx, ly);
+      }
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      const values = TASTE_AXES.map(a => wine.taste[a.key] || 0);
+      if (values.some(v => v > 0)) {
+        ctx.beginPath();
+        for (let i = 0; i < axesCount; i++) {
+          const angle = (Math.PI * 2 * i) / axesCount - Math.PI / 2;
+          const r = (maxR / 5) * values[i];
+          const px = centerX + Math.cos(angle) * r;
+          const py = centerY + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(107, 29, 47, 0.24)';
+        ctx.fill();
+        ctx.strokeStyle = '#6B1D2F';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        for (let i = 0; i < axesCount; i++) {
+          const angle = (Math.PI * 2 * i) / axesCount - Math.PI / 2;
+          const r = (maxR / 5) * values[i];
+          const px = centerX + Math.cos(angle) * r;
+          const py = centerY + Math.sin(angle) * r;
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#6B1D2F';
+          ctx.fill();
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      y = centerY + maxR + 58;
+
+      if (hasAromas) {
+        ctx.fillStyle = '#78716C';
+        ctx.font = '700 18px "Noto Sans KR", "Inter", sans-serif';
+        ctx.fillText('느껴진 향 · 풍미', cx, y);
+        y += 18;
+        let ax = cx;
+        let ay = y + 24;
+        ctx.font = '600 18px "Noto Sans KR", "Inter", sans-serif';
+        wine.aromas.forEach(aroma => {
+          const chipW = ctx.measureText(aroma).width + 28;
+          if (ax + chipW > W - cx) {
+            ax = cx;
+            ay += 44;
+          }
+          drawRoundRect(ctx, ax, ay - 24, chipW, 34, 17);
+          ctx.fillStyle = '#FFF1F2';
+          ctx.fill();
+          ctx.strokeStyle = '#FECDD3';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#6B1D2F';
+          ctx.fillText(aroma, ax + 14, ay - 1);
+          ax += chipW + 10;
+        });
+        y = ay + 32;
+      }
+
+      if (memoLines.length > 0) {
+        drawRoundRect(ctx, cx, y, W - cx * 2, memoBoxH - 12, 14);
+        ctx.fillStyle = '#FAF7F2';
+        ctx.fill();
+        ctx.fillStyle = '#6B1D2F';
+        ctx.fillRect(cx, y + 10, 5, memoBoxH - 32);
+
+        ctx.fillStyle = '#44403C';
+        ctx.font = '500 22px "Noto Sans KR", "Inter", sans-serif';
+        let my = y + 38;
+        memoLines.forEach(line => {
+          ctx.fillText(line, cx + 22, my);
+          my += 32;
+        });
+      }
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+      ctx.fillStyle = '#A8A29E';
+      ctx.font = '500 17px "Inter", "Noto Sans KR", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`나의 와인 테이스팅 노트 · ${dateStr}`, W / 2, totalH - 24);
+      ctx.textAlign = 'left';
+
+      return canvas.toDataURL('image/png');
+    }
+
+    let pendingExportItems = [];
+
+    function triggerDownloadItem(item) {
+      const a = document.createElement('a');
+      a.href = item.dataUrl;
+      a.download = item.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function triggerBatchDownload(items) {
+      items.forEach((item, idx) => {
+        setTimeout(() => {
+          triggerDownloadItem(item);
+        }, idx * 250);
+      });
+    }
+
+    function showExportModal(title, items, autoDownload = false) {
+      pendingExportItems = items;
+      document.getElementById('image-modal-title').textContent = title;
+      const container = document.getElementById('exported-cards-container');
+      container.innerHTML = '';
+
+      items.forEach((item, idx) => {
+        const cardWrap = document.createElement('div');
+        cardWrap.className = 'bg-white rounded-xl p-2 border border-stone-200 space-y-2';
+
+        const img = document.createElement('img');
+        img.src = item.dataUrl;
+        img.alt = item.label;
+        img.className = 'max-w-full h-auto rounded-lg shadow-sm';
+        cardWrap.appendChild(img);
+
+        if (items.length > 1) {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-2 px-1';
+          const lbl = document.createElement('span');
+          lbl.className = 'text-[11px] font-semibold text-stone-700 truncate';
+          lbl.textContent = `${idx + 1}. ${item.label}`;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-rose-50 text-[#6B1D2F] text-[11px] font-semibold shrink-0 transition';
+          btn.textContent = '개별 저장';
+          btn.addEventListener('click', () => triggerDownloadItem(item));
+          row.appendChild(lbl);
+          row.appendChild(btn);
+          cardWrap.appendChild(row);
+        }
+
+        container.appendChild(cardWrap);
+      });
+
+      const dlBtn = document.getElementById('btn-download-all-trigger');
+      dlBtn.textContent = items.length > 1
+        ? `전체 ${items.length}장 다운로드`
+        : 'PNG 다운로드';
+
+      const modal = document.getElementById('image-export-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      if (autoDownload) {
+        triggerBatchDownload(items);
+        showToast(`${items.length}장의 와인 요약 이미지를 다운로드합니다.`);
+      }
+    }
+
+    function dataUrlToPngFile(dataUrl, filename) {
+      const parts = dataUrl.split(',');
+      const bin = atob(parts[1]);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) {
+        arr[i] = bin.charCodeAt(i);
+      }
+      return new File([arr], filename, { type: 'image/png' });
+    }
+
+    async function shareExportItems(items) {
+      if (!items || items.length === 0) return false;
+      try {
+        const files = items.map(item => dataUrlToPngFile(item.dataUrl, item.filename));
+        if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+          await navigator.share({
+            files,
+            title: '나의 와인 테이스팅 노트',
+            text: '오늘의 와인 테이스팅 요약 이미지입니다.'
+          });
+          return true;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    async function shareAllWinesImages() {
+      if (!state.wines || state.wines.length === 0) {
+        showToast('공유할 와인이 없습니다.');
+        return;
+      }
+      const items = state.wines.map((wine, idx) => {
+        const safeName = (wine.name || 'wine').replace(/[^a-zA-Z0-9가-힣_-]+/g, '_').slice(0, 28);
+        return {
+          label: wine.name,
+          filename: `${idx + 1}_${safeName}_테이스팅노트.png`,
+          dataUrl: buildWineCardDataUrl(wine)
+        };
+      });
+      const shared = await shareExportItems(items);
+      if (!shared) {
+        showExportModal(`전체 와인 요약 이미지 (${items.length}장)`, items, false);
+        showToast('이 브라우저에서는 직접 공유가 지원되지 않아 저장 창을 열었어요.');
+      }
+    }
+
+    function openWineImageExport(wine) {
+      const safeName = (wine.name || 'wine').replace(/[^a-zA-Z0-9가-힣_-]+/g, '_').slice(0, 30);
+      const dataUrl = buildWineCardDataUrl(wine);
+      showExportModal('와인 요약 이미지 카드', [{
+        label: wine.name,
+        filename: `${safeName}_테이스팅노트.png`,
+        dataUrl
+      }], false);
+    }
+
+    function openAllWinesImageExport() {
+      if (!state.wines || state.wines.length === 0) {
+        showToast('저장할 와인이 없습니다.');
+        return;
+      }
+      const items = state.wines.map((wine, idx) => {
+        const safeName = (wine.name || 'wine').replace(/[^a-zA-Z0-9가-힣_-]+/g, '_').slice(0, 28);
+        return {
+          label: wine.name,
+          filename: `${idx + 1}_${safeName}_테이스팅노트.png`,
+          dataUrl: buildWineCardDataUrl(wine)
+        };
+      });
+      showExportModal(`전체 와인 요약 이미지 (${items.length}장)`, items, true);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderAll() {
+      const wine = getActiveWine();
+      renderLineup();
+      updateSummaryBadge();
+      if (wine) {
+        renderWineHeader(wine);
+        renderTasteAxes(wine);
+        renderRadarChart(wine);
+        renderAromas(wine);
+        renderMemo(wine);
+      }
+      if (state.activeTab === 'summary') {
+        renderSummaryView();
+      }
+    }
+
+    function initEventListeners() {
+      document.getElementById('btn-tab-tasting').addEventListener('click', () => switchTab('tasting'));
+      document.getElementById('btn-tab-summary').addEventListener('click', () => switchTab('summary'));
+
+      document.getElementById('btn-toggle-best').addEventListener('click', () => {
+        const wine = getActiveWine();
+        if (!wine) return;
+        wine.isBest = !wine.isBest;
+        saveState();
+        renderAll();
+        showToast(wine.isBest ? '🏆 오늘의 베스트 픽으로 지정했습니다.' : '베스트 픽 지정을 해제했습니다.');
+      });
+
+      document.querySelectorAll('.rebuy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wine = getActiveWine();
+          if (!wine) return;
+          const val = btn.getAttribute('data-rebuy');
+          wine.rebuy = wine.rebuy === val ? '' : val;
+          saveState();
+          renderWineHeader(wine);
+          updateSummaryBadge();
+        });
+      });
+
+      document.getElementById('wine-rebuy-reason').addEventListener('input', (e) => {
+        const wine = getActiveWine();
+        if (!wine) return;
+        wine.rebuyReason = e.target.value;
+        saveState();
+        renderLineup();
+        updateSummaryBadge();
+      });
+
+      document.getElementById('wine-memo').addEventListener('input', (e) => {
+        const wine = getActiveWine();
+        if (!wine) return;
+        wine.memo = e.target.value;
+        saveState();
+        renderLineup();
+        updateSummaryBadge();
+      });
+
+      document.getElementById('btn-open-add-modal').addEventListener('click', () => openWineModal(null));
+      document.getElementById('btn-edit-wine').addEventListener('click', () => {
+        const wine = getActiveWine();
+        if (wine) openWineModal(wine);
+      });
+      document.getElementById('btn-close-modal').addEventListener('click', closeWineModal);
+      document.getElementById('btn-cancel-modal').addEventListener('click', closeWineModal);
+
+      document.getElementById('wine-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('input-wine-name').value.trim();
+        if (!name) return;
+        const type = document.getElementById('input-wine-type').value;
+        const vintage = document.getElementById('input-wine-vintage').value.trim();
+        const region = document.getElementById('input-wine-region').value.trim();
+
+        if (state.editingWineId) {
+          const target = state.wines.find(w => w.id === state.editingWineId);
+          if (target) {
+            target.name = name;
+            target.type = type;
+            target.vintage = vintage;
+            target.region = region;
+          }
+          showToast('와인 정보를 수정했습니다.');
+        } else {
+          const newId = 'wine-' + Date.now();
+          state.wines.push({
+            id: newId,
+            name,
+            type,
+            vintage,
+            region,
+            rating: 0,
+            rebuy: '',
+            rebuyReason: '',
+            isBest: false,
+            taste: { sweetness: 0, acidity: 0, tannin: 0, body: 0, finish: 0 },
+            aromas: [],
+            memo: ''
+          });
+          state.activeWineId = newId;
+          showToast('새 와인을 추가했습니다.');
+        }
+
+        saveState();
+        closeWineModal();
+        renderAll();
+      });
+
+      document.getElementById('btn-delete-wine').addEventListener('click', () => {
+        if (!state.editingWineId || state.wines.length <= 1) return;
+        state.wines = state.wines.filter(w => w.id !== state.editingWineId);
+        if (!state.wines.some(w => w.id === state.activeWineId)) {
+          state.activeWineId = state.wines[0].id;
+        }
+        saveState();
+        closeWineModal();
+        renderAll();
+        showToast('와인을 삭제했습니다.');
+      });
+
+      function addCustomAroma() {
+        const input = document.getElementById('custom-aroma-input');
+        const val = input.value.trim();
+        if (!val) return;
+        const wine = getActiveWine();
+        if (!wine) return;
+        if (!wine.aromas.includes(val)) {
+          wine.aromas.push(val);
+          saveState();
+          renderAromas(wine);
+          renderLineup();
+          updateSummaryBadge();
+        }
+        input.value = '';
+      }
+
+      document.getElementById('btn-add-custom-aroma').addEventListener('click', addCustomAroma);
+      document.getElementById('custom-aroma-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCustomAroma();
+        }
+      });
+
+      document.getElementById('btn-copy-summary').addEventListener('click', copySummaryToClipboard);
+      document.getElementById('btn-export-all-img').addEventListener('click', openAllWinesImageExport);
+      document.getElementById('btn-share-all-img').addEventListener('click', shareAllWinesImages);
+      document.getElementById('btn-share-modal-trigger').addEventListener('click', async () => {
+        const shared = await shareExportItems(pendingExportItems);
+        if (!shared) {
+          showToast('이 기기/브라우저에서는 직접 공유가 지원되지 않습니다. PNG 다운로드를 이용해 주세요.');
+        }
+      });
+
+      document.getElementById('btn-scroll-top-rating').addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      const resetModal = document.getElementById('reset-modal');
+      document.getElementById('btn-open-reset-modal').addEventListener('click', () => {
+        resetModal.classList.remove('hidden');
+        resetModal.classList.add('flex');
+      });
+      document.getElementById('btn-cancel-reset').addEventListener('click', () => {
+        resetModal.classList.add('hidden');
+        resetModal.classList.remove('flex');
+      });
+      document.getElementById('btn-confirm-reset').addEventListener('click', () => {
+        state.wines = createDefaultWines();
+        state.activeWineId = state.wines[0].id;
+        state.customCategoryAromas = createDefaultCategoryAromas();
+        state.openAromaInputCategory = null;
+        saveState();
+        resetModal.classList.add('hidden');
+        resetModal.classList.remove('flex');
+        switchTab('tasting');
+        renderAll();
+        showToast('새 모임으로 초기화했습니다.');
+      });
+    }
+
+    function openGuideModal() {
+      const modal = document.getElementById('guide-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeGuideModal() {
+      const modal = document.getElementById('guide-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      try {
+        localStorage.setItem(GUIDE_SEEN_KEY, '1');
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      initEventListeners();
+      renderAll();
+
+      document.getElementById('btn-open-guide').addEventListener('click', openGuideModal);
+      document.getElementById('btn-close-guide').addEventListener('click', closeGuideModal);
+      document.getElementById('btn-start-tasting').addEventListener('click', closeGuideModal);
+      document.getElementById('btn-download-all-trigger').addEventListener('click', () => {
+        if (pendingExportItems.length > 0) {
+          triggerBatchDownload(pendingExportItems);
+          showToast(`${pendingExportItems.length}장의 이미지를 다운로드합니다.`);
+        }
+      });
+      document.getElementById('btn-close-image-modal').addEventListener('click', () => {
+        const modal = document.getElementById('image-export-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
+
+      try {
+        if (!localStorage.getItem(GUIDE_SEEN_KEY)) {
+          openGuideModal();
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
+    });
+  </script>
+</body>
+</html>
